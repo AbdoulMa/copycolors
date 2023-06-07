@@ -1,0 +1,41 @@
+[package]
+name = "tuto_dominant_color"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]] 
+name = "copycolors"
+path = "src/main.rs"
+
+[target.i686-pc-windows-gnu]
+linker = "i686-w64-mingw32-gcc"
+
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+color-thief = "0.2.2"
+image = "0.24.6"
+tempfile = "3.5.0"
+ureq =  { version = "2.6.2",  features = ["native-tls", "tls"] } 
+url = "2.3.1"
+regex = "1.8.1"
+crossterm = "0.26.1"
+clap = "4.3.0"
+
+[profile.dev]
+opt-level = 1 # Make debug run faster 
+panic = "abort" # Better optimization & small binaries
+
+# Optimize all dependencies even in debug builds (does not affect workspace packages)
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+lto = true 
+strip = true 
+opt-level =  "z"
+panic = "abort"
+codegen-units = 1 
