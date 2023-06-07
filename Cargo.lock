@@ -170,6 +170,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 
 [[package]]
+name = "copycolors"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "color-thief",
+ "crossterm",
+ "image",
+ "regex",
+ "tempfile",
+ "ureq",
+ "url",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1062,20 +1076,6 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
-
-[[package]]
-name = "tuto_dominant_color"
-version = "0.1.0"
-dependencies = [
- "clap",
- "color-thief",
- "crossterm",
- "image",
- "regex",
- "tempfile",
- "ureq",
- "url",
-]
 
 [[package]]
 name = "unicode-bidi"
