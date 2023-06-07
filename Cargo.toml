@@ -5,7 +5,7 @@ version = "0.1.0"
 edition = "2021"
 author = "Abdoul ISSA BIDA <issamadjid1995@gmail.com>"
 license = "MIT" # https://doc.rust-lang.org/cargo/reference/manifest.html
-repository = ""
+repository = "https://github.com/AbdoulMa/copycolors"
 categories = ["command-line-utilities"]
 readme = "README.md"
 
