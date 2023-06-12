@@ -37,8 +37,8 @@ fn main() {
                 .help("Image file local or remote path"),
         )
         .arg(
-            Arg::new("nb_colors")
-                .long("nb_colors")
+            Arg::new("nb-colors")
+                .long("nb-colors")
                 .short('n')
                 .num_args(1)
                 .default_value("5")
@@ -47,6 +47,7 @@ fn main() {
         .arg(
             Arg::new("rgb")
                 .long("rgb")
+                .short('r')
                 .help("Print RGB code")
                 .action(ArgAction::SetTrue),
         )

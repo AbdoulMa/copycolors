@@ -40,8 +40,8 @@ impl ImageTrait for DynamicImage {
                     b: ex_color.b,
                 });
                 let pixel_dist_pct = pixel_dist / MAX_DISTANCE;
-                if pixel_dist_pct < 0.075 {
-                    // threshold 7.5%
+                if pixel_dist_pct < 0.05 {
+                    // threshold 5%
                     keep_pixel = false;
                 }
             }
