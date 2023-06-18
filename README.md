@@ -66,7 +66,19 @@ The supported images formats are:
  
 |Format| Extension|
 |:-------|:------|
-|E ||
+|PNG ||
+|JPEG||
+|GIF||
+|BMP ||
+|ICO ||
+|TIFF ||
+|WEBP ||
+|AVIF ||
+|PNM ||
+|DDS ||
+|TGA ||
+
+The supported colors formats are: `RGB` and `RGBA`.
 
 You can access the CLI help with `--help` (`-h`) flag. 
 
