@@ -125,34 +125,6 @@ impl ColorsCanvas {
     }
 }
 
-// struct Canva {
-//     width: u8,
-//     height: u8,
-//     color: Color,
-// }
-
-// impl Canva {
-//     fn draw(&self) {
-//         println!();
-//         for i in 0..self.height / 2 {
-//             print!("{}", " ".repeat(3));
-//             let line = " ".repeat(self.width as usize);
-//             let (r, g, b) = (self.color.r, self.color.g, self.color.b);
-//             let line = line.on_truecolor(r, g, b);
-//             print!("{line}");
-//             if i == 1 {
-//                 print!(" RGB: rgb({r}, {g}, {b})");
-//             }
-//             if i == 2 {
-//                 print!(" Hex: #{r:02X}{g:02X}{b:02X}");
-//             }
-//             println!();
-//         }
-//     }
-// }
-
-
-
 fn stylize_text(text: String, bold: bool,fg: &Color, bg: &Color) { 
     if bold {
     io::stdout()
