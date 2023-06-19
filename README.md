@@ -1,6 +1,7 @@
 ![](images/logo.png)
 
 **copycolors** is command-Line Interface to extract the dominant colors from local or remote images faster.
+
 It is built with Rust and is essentially based on the implementation the _Colors Thief_ algorithm written by  
 [Yevhenii Reizner](https://github.com/RazrFalcon/color-thief-rs).
 
@@ -8,7 +9,7 @@ It is built with Rust and is essentially based on the implementation the _Colors
 
 copycolors CLI can be installed from different sources:
 
-- You can get sources and pre-built binaries for the latest release of copycolors from the [releases page](https://www.github.com/abdoulma/copycolors/releases).
+- You can get sources and pre-built binaries (for Linux and Windows) for the latest release of copycolors from the [releases page](https://www.github.com/abdoulma/copycolors/releases).
 
 - If you have a Rust toolchain installed, you can also install the latest development version with `cargo install --git https://github.com/abdoulma/copycolors` or more simply you can install the stable version with `cargo install copycolors`
 
