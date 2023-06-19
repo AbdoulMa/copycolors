@@ -137,7 +137,7 @@ When bcw & bcb are  both requested, bcb is used.",
         }
     };
 
-    let nb_colors = match matches.get_raw("nb_colors") {
+    let nb_colors = match matches.get_raw("nb-colors") {
         Some(nb) => match nb
             .into_iter()
             .next()
