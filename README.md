@@ -11,7 +11,7 @@ copycolors CLI can be installed from different sources:
 
 - You can get sources and pre-built binaries (for Linux and Windows) for the latest release of copycolors from the [releases page](https://www.github.com/abdoulma/copycolors/releases).
 
-- If you have a Rust toolchain installed, you can also install the latest development version with `cargo install --git https://github.com/abdoulma/copycolors` or more simply you can install the stable version with `cargo install copycolors`
+- If you have a Rust toolchain installed, you can also install the latest development version with `cargo install --git https://github.com/abdoulma/copycolors`.
 
 ## Usage
 
