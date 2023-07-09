@@ -101,7 +101,7 @@ The supported images formats are:
 | DDS    |
 | TGA    |
 
-The supported colors formats are: `RGB` and `RGBA`.
+The supported pixels colors type are: `RGB` and `RGBA`.
 
 You can access the CLI help with `--help` (`-h`) flag.
 

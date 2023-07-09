@@ -1,5 +1,7 @@
-use image::DynamicImage;
+use std::process;
+
 use crate::{Color, ColorFormat, ColorTrait};
+use image::DynamicImage;
 
 const MAX_DISTANCE: f32 = 585225.0;
 
@@ -14,7 +16,10 @@ impl ImageTrait for DynamicImage {
         match self.color() {
             image::ColorType::Rgb8 => ColorFormat::Rgb,
             image::ColorType::Rgba8 => ColorFormat::Rgba,
-            _ => unreachable!(),
+            other => {
+                eprintln!("Sorry, images with {other:?} color type pixels are not supported.");
+                process::exit(1);
+            }
         }
     }
 
