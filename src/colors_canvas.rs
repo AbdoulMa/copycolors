@@ -5,6 +5,7 @@ use crossterm::{
     ExecutableCommand,
 };
 
+//  Canvas Structure
 pub struct ColorsCanvas {
     colors: Vec<Color>,
     show_canvas: bool,
