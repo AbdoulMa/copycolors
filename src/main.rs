@@ -52,6 +52,12 @@ fn main() {
                 .action(ArgAction::SetTrue),
         )
         .arg(
+            Arg::new("clip")
+                .long("clip")
+                .help("Clipboard colors extracted")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
             Arg::new("exc-colors")
                 .value_name("COLOURS")
                 .long("exc-colors")
@@ -116,6 +122,8 @@ When bcw & bcb are  both requested, bcb is used.",
     } else {
         None
     };
+
+    let clip_colors = matches.get_flag("clip");
     let mut file_path = match matches.get_raw("file_path") {
         Some(f) => String::from(f.into_iter().next().unwrap().to_str().unwrap()),
         None => {
@@ -189,7 +197,7 @@ When bcw & bcb are  both requested, bcb is used.",
         }
     });
 
-    // // let color_type = find_color(image.color());
+    // let color_type = find_color(image.color());
     let fv = image.filtered_image_bytes(&excluded_colors);
     let (color_bytes, color_format) = if !excluded_colors.is_empty() {
         (fv.as_slice(), ColorFormat::Rgb)
@@ -207,7 +215,7 @@ When bcw & bcb are  both requested, bcb is used.",
                 .unwrap()
         });
     }
-    let cv = ColorsCanvas::new(colors, show_canvas, with_rgb);
+    let cv = ColorsCanvas::new(colors, show_canvas, with_rgb, clip_colors);
     cv.display();
 }
 
