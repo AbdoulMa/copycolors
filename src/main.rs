@@ -128,7 +128,7 @@ When bcw & bcb are  both requested, bcb is used.",
     let mut file_path = match matches.get_raw("file_path") {
         Some(f) => String::from(f.into_iter().next().unwrap().to_str().unwrap()),
         None => {
-            eprintln!("You should put a local or remote file path.");
+            eprintln!("You should put a directory path or a local or remote file path.");
             process::exit(1);
         }
     };
