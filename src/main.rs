@@ -33,9 +33,9 @@ fn main() {
         // TODO: Adapt when it is a directory
         .arg(
             Arg::new("file_path")
-                .value_name("FILE_PATH")
+                .value_name("DIR_OR_FILE_PATH")
                 .required(true)
-                .help("Image file local or remote path"),
+                .help("Local repertory / Local or remote image path"),
         )
         .arg(
             Arg::new("nb-colors")
