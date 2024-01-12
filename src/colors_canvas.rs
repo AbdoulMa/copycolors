@@ -141,6 +141,11 @@ impl ColorsCanvas {
             _ => self.print(),
         }
     }
+
+    // TODO: Print and drawing methods for colors exctracted from 
+    // Text and styling
+    // fn interactive_print() -> Text  
+    // fn interactive_draw() -> Text
 }
 
 fn stylize_text(text: String, bold: bool, fg: &Color, bg: &Color) {
