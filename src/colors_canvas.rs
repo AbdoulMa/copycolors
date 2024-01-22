@@ -1,10 +1,11 @@
-use crate::{io, Color, ColorTrait};
+use crate::{io, Color, ColorTrait, Line, Span, Style, Text};
 
 use copypasta::{ClipboardContext, ClipboardProvider};
 use crossterm::{
     style::{Print, ResetColor, SetBackgroundColor, SetForegroundColor, Stylize},
     ExecutableCommand,
 };
+use ratatui::style::Modifier;
 
 pub struct ColorsCanvas {
     colors: Vec<Color>,
@@ -55,6 +56,52 @@ impl ColorsCanvas {
             ctx.set_contents(colors_clipped_text).unwrap();
             let _clipped_colors = ctx.get_contents().unwrap();
         }
+    }
+
+    pub fn print_tui(&self) -> Text {
+        let mut lines_result = Line::from(vec![]);
+        let t_colors = vec![
+            Color { r: 0, g: 0, b: 0 },
+            Color {
+                r: 255,
+                g: 255,
+                b: 255,
+            },
+        ];
+        //  Clipboard management
+        let mut ctx = ClipboardContext::new().unwrap();
+        let mut colors_clipped_text = String::new();
+        for i in 0..self.colors.len() {
+            let col = self.colors[i];
+            let txt_col = col.best_contrast(&t_colors);
+            let color_str = match self.with_rgb {
+                true => col.rgb_str(),
+                _ => col.hexadecimal_str(),
+            };
+            colors_clipped_text.push_str(&color_str);
+            //   TODO: change here
+            //  stylize_text(color_str, true, txt_col, &col);
+            let span = Span::styled(
+                color_str,
+                Style::new()
+                    .fg(ratatui::style::Color::Rgb(txt_col.r, txt_col.g, txt_col.b))
+                    .bg(ratatui::style::Color::Rgb(col.r, col.g, col.b))
+                    .add_modifier(Modifier::BOLD),
+            );
+            lines_result.spans.push(span);
+            if i < self.colors.len() - 1 {
+                lines_result.spans.push(Span::raw(","));
+                // print!(",");
+                colors_clipped_text.push(',');
+            }
+        }
+        //    println!();
+        // Clip colors if flagged
+        if self.clip_colors {
+            ctx.set_contents(colors_clipped_text).unwrap();
+            let _clipped_colors = ctx.get_contents().unwrap();
+        }
+        Text::from(vec![lines_result])
     }
 
     fn draw(&self) {
@@ -142,9 +189,9 @@ impl ColorsCanvas {
         }
     }
 
-    // TODO: Print and drawing methods for colors exctracted from 
+    // TODO: Print and drawing methods for colors exctracted from
     // Text and styling
-    // fn interactive_print() -> Text  
+    // fn interactive_print() -> Text
     // fn interactive_draw() -> Text
 }
 

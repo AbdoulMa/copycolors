@@ -2,16 +2,24 @@
 //  Terminal color, alternative termcolor crates
 use clap::{Arg, ArgAction, Command};
 use color_thief::{Color, ColorFormat};
+use image::Rgb;
 use regex::Regex;
 use std::{
     cmp::Ordering,
     fs::{self, File}, // File & Repertory management
-    io,
     path::Path,
     process,
 };
 
 use url::Url;
+
+use std::io::{self, stdout};
+use crossterm::{
+    event::{self, Event, KeyCode},
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    ExecutableCommand,
+};
+use ratatui::{prelude::*, widgets::*};
 
 mod colors_canvas;
 use colors_canvas::ColorsCanvas;
@@ -21,6 +29,27 @@ use color_trait::ColorTrait;
 
 mod image_trait;
 use image_trait::ImageTrait;
+
+/* Interactive CLI */
+fn handle_events() -> io::Result<bool> {
+    if event::poll(std::time::Duration::from_millis(50))? {
+        if let Event::Key(key) = event::read()? {
+            if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('q') {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+fn ui(frame: &mut Frame) {
+    let test_canvas = ColorsCanvas::new(vec![Color{r: 241, b: 25, g: 87}],false, false, false);
+    frame.render_widget(
+        Paragraph::new(test_canvas.print_tui())
+            .block(Block::default().title("Greeting").borders(Borders::ALL)),
+        frame.size(),
+    );
+}
 
 fn main() {
     /*
@@ -136,6 +165,18 @@ When bcw & bcb are  both requested, bcb is used.",
     if repertory.is_ok() {
         // TODO: Manage Directory Case
         println!("It is a repertory, let's manage it!");
+        enable_raw_mode().unwrap();
+        stdout().execute(EnterAlternateScreen).unwrap();
+        let mut terminal = Terminal::new(CrosstermBackend::new(stdout())).unwrap();
+
+        let mut should_quit = false;
+        while !should_quit {
+            terminal.draw(ui).unwrap();
+            should_quit = handle_events().unwrap();
+        }
+
+        disable_raw_mode().unwrap();
+        stdout().execute(LeaveAlternateScreen).unwrap();
     } else {
         // Image File Case
         let image_regex =
