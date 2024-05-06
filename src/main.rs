@@ -14,13 +14,14 @@ use std::{
 use url::Url;
 
 use crossterm::{
-    event::{self, Event, KeyCode},
+    event::{self, Event, KeyCode, KeyEventKind},
+    execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
-use ratatui::{prelude::*, widgets::*};
+use ratatui::{prelude::style::Color as RatatuiColor, prelude::*, widgets::*};
 use std::io::{self, stdout};
-
+use std::time::{Duration, Instant};
 mod colors_canvas;
 use colors_canvas::ColorsCanvas;
 
@@ -33,7 +34,143 @@ use image_trait::ImageTrait;
 mod image_file_lib;
 use image_file_lib::ImageFile;
 
-/* Interactive CLI */
+struct StatefulList<T> {
+    state: ListState,
+    items: Vec<T>,
+}
+
+//  TODO: Wrap it in a module
+enum InputMode {
+    Normal,
+    Browsing,
+}
+
+impl<T> StatefulList<T> {
+    fn with_items(items: Vec<T>) -> StatefulList<T> {
+        StatefulList {
+            state: ListState::default(),
+            items,
+        }
+    }
+
+    fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i >= self.items.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.items.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    fn unselect(&mut self) {
+        self.state.select(None);
+    }
+}
+
+struct App {
+    // items: StatefulList<&'a str>,
+    items: StatefulList<String>,
+    output: String,
+    input_mode: InputMode,
+    // events: Vec<(&'a str, &'a str)>,
+}
+
+impl App {
+    fn new(dir_path: &str) -> App {
+        let images_re =
+            Regex::new(r"\.(png|jpe?g|gif|bmp|ico|tiff|webp|avif|pnm|dds|tga)$").unwrap();
+        let files = fs::read_dir(dir_path).unwrap();
+        let images_files = files
+            .into_iter()
+            .map(|f| f.unwrap().path().file_name().unwrap().to_owned())
+            .map(|f| f.to_str().unwrap().to_string())
+            .filter(|f| images_re.is_match(f))
+            .collect::<Vec<String>>();
+
+        App {
+            items: StatefulList::with_items(images_files),
+            output: String::new(),
+            input_mode: InputMode::Normal,
+        }
+    }
+}
+
+fn run_app<B: Backend>(
+    terminal: &mut Terminal<B>,
+    mut app: App,
+    tick_rate: Duration,
+) -> io::Result<()> {
+    let mut last_tick = Instant::now();
+    loop {
+        terminal.draw(|f| ui(f, &mut app))?;
+
+        let timeout = tick_rate.saturating_sub(last_tick.elapsed());
+        if crossterm::event::poll(timeout)? {
+            if let Event::Key(key) = event::read()? {
+                match app.input_mode {
+                    InputMode::Normal => {
+                        if key.kind == KeyEventKind::Press {
+                            match key.code {
+                                KeyCode::Char('q') => return Ok(()),
+                                KeyCode::Down => {
+                                    app.input_mode = InputMode::Browsing;
+                                    app.items.next();
+                                }
+                                KeyCode::Up => {
+                                    app.input_mode = InputMode::Browsing;
+                                    app.items.previous();
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                    InputMode::Browsing => {
+                        if key.kind == KeyEventKind::Press {
+                            match key.code {
+                                KeyCode::Left => {
+                                    app.input_mode = InputMode::Normal;
+                                    app.items.unselect();
+                                }
+                                KeyCode::Down => {
+                                    app.items.next();
+                                }
+                                KeyCode::Up => {
+                                    app.items.previous();
+                                }
+                                KeyCode::Char('q') => return Ok(()),
+                                _ => {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // if last_tick.elapsed() >= tick_rate {
+        //     app.on_tick();
+        //     last_tick = Instant::now();
+        // }
+    }
+}
+
 fn handle_events() -> io::Result<bool> {
     if event::poll(std::time::Duration::from_millis(50))? {
         if let Event::Key(key) = event::read()? {
@@ -45,25 +182,114 @@ fn handle_events() -> io::Result<bool> {
     Ok(false)
 }
 
-fn ui(frame: &mut Frame) {
-    let test_canvas = ColorsCanvas::new(
-        vec![Color {
-            r: 241,
-            b: 25,
-            g: 87,
-        }],
-        false,
-        false,
-        false,
-    );
-    frame.render_widget(
-        Paragraph::new(test_canvas.print_tui())
-            .block(Block::default().title("Greeting").borders(Borders::ALL)),
-        frame.size(),
-    );
+// https://ratatui.rs/how-to/layout/
+fn ui(frame: &mut Frame, app: &mut App) {
+    if app.items.items.is_empty() {
+        let no_files_message = vec![
+            "No images files in that repository. ".into(),
+            "Press ".into(),
+            "q ".bold(),
+            "to exit.".into(),
+        ];
+
+        let no_files_message = Text::from(Line::from(no_files_message));
+        let no_files_message = Paragraph::new(no_files_message);
+        frame.render_widget(no_files_message, frame.size());
+    } else {
+        let main_layout = Layout::new()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(1),
+                Constraint::Min(9),
+                Constraint::Min(0),
+            ])
+            .split(frame.size());
+
+        let help_message = match app.input_mode {
+            InputMode::Normal => vec![
+                "Press ".into(),
+                "↓/↑ ".bold(),
+                "to browse the files. ".into(),
+                "Or press ".into(),
+                "q ".bold(),
+                "to exit.".into(),
+            ],
+            InputMode::Browsing => vec!["Press ".into(), "q ".bold(), "to exit.".into()],
+        };
+
+        let help_message = Text::from(Line::from(help_message));
+        let help_message = Paragraph::new(help_message);
+        frame.render_widget(help_message, main_layout[0]);
+        let items: Vec<ListItem> = app
+            .items
+            .items
+            .iter()
+            .map(|path| ListItem::new(path.clone()).style(Style::default().fg(RatatuiColor::White)))
+            .collect();
+        let items = List::new(items)
+            .block(Block::default().title("Files").borders(Borders::ALL))
+            .style(Style::default().fg(RatatuiColor::White))
+            .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
+            .highlight_symbol(">>");
+        // TODO: tester pb avec la modification et les refresh
+        frame.render_stateful_widget(items, main_layout[1], &mut app.items.state);
+        let selected_item_index = app.items.state.selected();
+
+        if selected_item_index.is_none() {
+            let selected_item = "Please, select a image file to extract its colors.";
+            frame.render_widget(Paragraph::new(selected_item.bold()), main_layout[2]);
+        } else {
+            let selected_item = &app.items.items[selected_item_index.unwrap()];
+            frame.render_widget(
+                Paragraph::new(
+                    selected_item.as_str().set_style(
+                        Style::new()
+                            .bg(RatatuiColor::Rgb(255, 255, 0))
+                            .fg(RatatuiColor::Rgb(0, 0, 0)),
+                    ),
+                )
+                .block(
+                    Block::default()
+                        .title("Extracted Colors")
+                        .borders(Borders::ALL),
+                ),
+                main_layout[2],
+            );
+        }
+    }
 }
 
-fn main() {
+/* Interactive CLI */
+// fn handle_events() -> io::Result<bool> {
+//     if event::poll(std::time::Duration::from_millis(50))? {
+//         if let Event::Key(key) = event::read()? {
+//             if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('q') {
+//                 return Ok(true);
+//             }
+//         }
+//     }
+//     Ok(false)
+// }
+
+// fn ui(frame: &mut Frame) {
+//     let test_canvas = ColorsCanvas::new(
+//         vec![Color {
+//             r: 241,
+//             b: 25,
+//             g: 87,
+//         }],
+//         false,
+//         false,
+//         false,
+//     );
+//     frame.render_widget(
+//         Paragraph::new(test_canvas.print_tui())
+//             .block(Block::default().title("Greeting").borders(Borders::ALL)),
+//         frame.size(),
+//     );
+// }
+
+fn main() -> io::Result<()> {
     /*
     CLI Program
      */
@@ -176,19 +402,23 @@ When bcw & bcb are  both requested, bcb is used.",
     let repertory = fs::read_dir(&file_path);
     if repertory.is_ok() {
         // TODO: Manage Directory Case
-        println!("It is a repertory, let's manage it!");
-        enable_raw_mode().unwrap();
-        stdout().execute(EnterAlternateScreen).unwrap();
-        let mut terminal = Terminal::new(CrosstermBackend::new(stdout())).unwrap();
 
-        let mut should_quit = false;
-        while !should_quit {
-            terminal.draw(ui).unwrap();
-            should_quit = handle_events().unwrap();
+        enable_raw_mode()?;
+        stdout().execute(EnterAlternateScreen)?;
+        let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
+
+        let tick_rate = Duration::from_millis(250);
+        let app = App::new(&file_path);
+        let res = run_app(&mut terminal, App::new(&file_path) /* app*/, tick_rate);
+
+        disable_raw_mode()?;
+        execute!(terminal.backend_mut(), LeaveAlternateScreen,)?;
+
+        terminal.show_cursor()?;
+
+        if let Err(err) = res {
+            println!("{err:?}");
         }
-
-        disable_raw_mode().unwrap();
-        stdout().execute(LeaveAlternateScreen).unwrap();
     } else {
         // Image File Case
         let image_regex =
@@ -263,6 +493,8 @@ When bcw & bcb are  both requested, bcb is used.",
         let cv = ColorsCanvas::new(colors, show_canvas, with_rgb, clip_colors);
         cv.display();
     }
+
+    Ok(())
 }
 
 fn download_file(file_link: &str, file_dest: &str) {
