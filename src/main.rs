@@ -2,7 +2,7 @@
 //  Terminal color, alternative termcolor crates
 use clap::{Arg, ArgAction, Command};
 use color_thief::{Color, ColorFormat};
-use image::Rgb;
+use image::{ImageError, Rgb};
 use regex::Regex;
 use std::{
     cmp::Ordering,
@@ -240,6 +240,24 @@ When bcw & bcb are  both requested, bcb is used.",
         }
 
         let image_file = ImageFile::new(file_path);
+        if image_file.image.is_err() {
+            match image_file.image.err().unwrap() {
+                image::ImageError::IoError(io_error) => match io_error.kind() {
+                    io::ErrorKind::NotFound => {
+                        eprintln!("File not found.\nPlease be sure you provide the correct path!");
+                        process::exit(1);
+                    }
+                    _ => {
+                        eprintln!("Error while opening the file!");
+                        process::exit(1);
+                    }
+                },
+                _ => {
+                    eprintln!("Error while opening the file!");
+                    process::exit(1);
+                }
+            }
+        }
         let colors = image_file.get_colors_from_images(nb_colors as u8, excluded_colors, bc_color);
         // Colors extractor
         // let image = image::open(Path::new(&file_path)).unwrap_or_else(|err| match err {
@@ -274,7 +292,8 @@ When bcw & bcb are  both requested, bcb is used.",
         //             .partial_cmp(&c2.contrast_with(cc))
         //             .map(Ordering::reverse)
         //             .unwrap()
-        //     });
+        //     });.0
+
         // }
         let cv = ColorsCanvas::new(colors, show_canvas, with_rgb, clip_colors);
         cv.display();

@@ -1,4 +1,4 @@
-use image::{self, DynamicImage, Rgb};
+use image::{self, DynamicImage, ImageResult, Rgb};
 
 use std::{cmp::Ordering, io, path::Path, process};
 
@@ -7,44 +7,26 @@ use crate::ImageTrait;
 
 use color_thief::{Color, ColorFormat};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ImageFile {
     file_path: String,
     // TODO: Result, to manage problematic image at read
     // and more important to not disturb directory case
-    image: DynamicImage,
+    pub image: ImageResult<DynamicImage>,
 }
 
 impl ImageFile {
     pub fn new(file_path: String) -> Self {
         let mut image_file = Self {
             file_path,
-            image: DynamicImage::new_rgb8(0, 0),
+            image: Ok(DynamicImage::new_rgb8(0, 0)),
         };
         image_file.set_image_from_file_path();
         image_file
     }
 
-    fn set_file_path(&mut self, file_path: String) {
-        self.file_path = file_path
-    }
     pub fn set_image_from_file_path(&mut self) {
-        self.image = image::open(Path::new(&self.file_path)).unwrap_or_else(|err| match err {
-            image::ImageError::IoError(io_error) => match io_error.kind() {
-                io::ErrorKind::NotFound => {
-                    eprintln!("File not found.\nPlease be sure you provide the correct path!");
-                    process::exit(1);
-                }
-                _ => {
-                    eprintln!("Error while opening the file!");
-                    process::exit(1);
-                }
-            },
-            _ => {
-                eprintln!("Error while opening the file!");
-                process::exit(1);
-            }
-        });
+        self.image = image::open(Path::new(&self.file_path));
     }
 
     pub fn get_colors_from_images(
@@ -53,11 +35,18 @@ impl ImageFile {
         excluded_colors: Vec<Color>,
         bc_color: Option<Color>,
     ) -> Vec<Color> {
-        let fv = self.image.filtered_image_bytes(&excluded_colors);
+        let fv = self
+            .image
+            .as_ref()
+            .unwrap()
+            .filtered_image_bytes(&excluded_colors);
         let (color_bytes, color_format) = if !excluded_colors.is_empty() {
             (fv.as_slice(), ColorFormat::Rgb)
         } else {
-            (self.image.as_bytes(), self.image.color_format())
+            (
+                self.image.as_ref().unwrap().as_bytes(),
+                self.image.as_ref().unwrap().color_format(),
+            )
         };
         let mut colors =
             color_thief::get_palette(color_bytes, color_format, 10, nb_colors as u8).unwrap();
