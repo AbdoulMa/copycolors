@@ -258,43 +258,8 @@ When bcw & bcb are  both requested, bcb is used.",
                 }
             }
         }
+        // Colors extracting
         let colors = image_file.get_colors_from_images(nb_colors as u8, excluded_colors, bc_color);
-        // Colors extractor
-        // let image = image::open(Path::new(&file_path)).unwrap_or_else(|err| match err {
-        //     image::ImageError::IoError(io_error) => match io_error.kind() {
-        //         io::ErrorKind::NotFound => {
-        //             eprintln!("File not found.\nPlease be sure you provide the correct path!");
-        //             process::exit(1);
-        //         }
-        //         _ => {
-        //             eprintln!("Error while opening the file!");
-        //             process::exit(1);
-        //         }
-        //     },
-        //     _ => {
-        //         eprintln!("Error while opening the file!");
-        //         process::exit(1);
-        //     }
-        // });
-
-        // let fv = image.filtered_image_bytes(&excluded_colors);
-        // let (color_bytes, color_format) = if !excluded_colors.is_empty() {
-        //     (fv.as_slice(), ColorFormat::Rgb)
-        // } else {
-        //     (image.as_bytes(), image.color_format())
-        // };
-
-        // let mut colors =
-        //     color_thief::get_palette(color_bytes, color_format, 10, nb_colors as u8).unwrap();
-        // if let Some(cc) = bc_color {
-        //     colors.sort_by(|c1, c2| {
-        //         c1.contrast_with(cc)
-        //             .partial_cmp(&c2.contrast_with(cc))
-        //             .map(Ordering::reverse)
-        //             .unwrap()
-        //     });.0
-
-        // }
         let cv = ColorsCanvas::new(colors, show_canvas, with_rgb, clip_colors);
         cv.display();
     }
