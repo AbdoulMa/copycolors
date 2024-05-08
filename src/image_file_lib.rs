@@ -1,11 +1,8 @@
-use image::{self, DynamicImage, ImageResult, Rgb};
-
-use std::{cmp::Ordering, io, path::Path, process};
-
 use crate::ColorTrait;
 use crate::ImageTrait;
-
 use color_thief::{Color, ColorFormat};
+use image::{self, DynamicImage, ImageResult};
+use std::{cmp::Ordering, path::Path};
 
 #[derive(Debug)]
 pub struct ImageFile {

@@ -1,12 +1,13 @@
-use crate::{io, Color, ColorTrait, Line, Span, Style, Text};
-
+use crate::color_trait::ColorTrait;
+use color_thief::Color;
 use copypasta::{ClipboardContext, ClipboardProvider};
-use crossterm::{
-    style::{Print, ResetColor, SetBackgroundColor, SetForegroundColor, Stylize},
-    ExecutableCommand,
+use crossterm::style::{Print, ResetColor, SetBackgroundColor, SetForegroundColor, Stylize};
+use crossterm::ExecutableCommand;
+use ratatui::{
+    style::{Modifier, Style},
+    text::{Line, Span, Text},
 };
-use ratatui::style::Modifier;
-
+use std::io;
 pub struct ColorsCanvas {
     colors: Vec<Color>,
     show_canvas: bool,
