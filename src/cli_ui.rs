@@ -1,3 +1,4 @@
+use color_thief::Color;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{prelude::style::Color as RatatuiColor, prelude::*, widgets::*};
 use regex::Regex;
@@ -5,6 +6,10 @@ use std::{
     fs, io,
     time::{Duration, Instant},
 };
+
+use crate::ColorsCanvas;
+use crate::ImageFile;
+
 struct StatefulList<T> {
     state: ListState,
     vertical_scroll_state: ScrollbarState,
@@ -12,7 +17,6 @@ struct StatefulList<T> {
     items: Vec<T>,
 }
 
-//  TODO: Wrap it in a module
 enum InputMode {
     Normal,
     Browsing,
@@ -66,13 +70,22 @@ impl<T> StatefulList<T> {
 
 pub struct App {
     items: StatefulList<String>,
-    output: String,
+    dir_path: String,
     input_mode: InputMode,
-    // events: Vec<(&'a str, &'a str)>,
+    nb_colors: u8,
+    with_rgb: bool,
+    excluded_colors: Vec<Color>,
+    bc_color: Option<Color>,
 }
 
 impl App {
-    pub fn new(dir_path: &str) -> App {
+    pub fn new(
+        dir_path: &str,
+        nb_colors: u8,
+        with_rgb: bool,
+        excluded_colors: Vec<Color>,
+        bc_color: Option<Color>,
+    ) -> App {
         let images_re =
             Regex::new(r"\.(png|jpe?g|gif|bmp|ico|tiff|webp|avif|pnm|dds|tga)$").unwrap();
         let files = fs::read_dir(dir_path).unwrap();
@@ -82,11 +95,15 @@ impl App {
             .map(|f| f.to_str().unwrap().to_string())
             .filter(|f| images_re.is_match(f))
             .collect::<Vec<String>>();
-
+        let dir_path = dir_path.to_string();
         App {
             items: StatefulList::with_items(images_files),
-            output: String::new(),
+            dir_path,
             input_mode: InputMode::Normal,
+            nb_colors,
+            with_rgb,
+            excluded_colors,
+            bc_color,
         }
     }
 }
@@ -207,8 +224,13 @@ fn ui(frame: &mut Frame, app: &mut App) {
         let items = List::new(items)
             .block(Block::default().title("Files").borders(Borders::ALL))
             .style(Style::default().fg(RatatuiColor::White))
-            .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
-            .highlight_symbol(">> ");
+            .highlight_style(
+                Style::default()
+                    .bg(RatatuiColor::White)
+                    .fg(RatatuiColor::Black)
+                    .add_modifier(Modifier::ITALIC),
+            )
+            .highlight_symbol("> ");
         app.items.vertical_scroll_state =
             app.items.vertical_scroll_state.content_length(items.len());
 
@@ -226,21 +248,50 @@ fn ui(frame: &mut Frame, app: &mut App) {
             frame.render_widget(Paragraph::new(selected_item.bold()), main_layout[2]);
         } else {
             let selected_item = &app.items.items[selected_item_index.unwrap()];
-            frame.render_widget(
-                Paragraph::new(
-                    selected_item.as_str().set_style(
-                        Style::new()
-                            .bg(RatatuiColor::Rgb(255, 255, 0))
-                            .fg(RatatuiColor::Rgb(0, 0, 0)),
+            let file_path = format!("{}/{}", app.dir_path, selected_item);
+            let file_p = file_path.clone();
+            let image_file = ImageFile::new(file_path);
+            if image_file.image.is_err() {
+                let error_message = match image_file.image.err().unwrap() {
+                    image::ImageError::IoError(io_error) => match io_error.kind() {
+                        io::ErrorKind::NotFound => {
+                            "File not found.\nPlease be sure you provide the correct path!"
+                        }
+                        _ => "Error while opening the file!",
+                    },
+                    _ => "Error while opening the file!",
+                };
+                let error_message = format!("{}{}", file_p, error_message);
+                frame.render_widget(
+                    Paragraph::new(
+                        error_message.set_style(
+                            Style::new()
+                                .bg(RatatuiColor::Rgb(255, 255, 0))
+                                .fg(RatatuiColor::Rgb(0, 0, 0)),
+                        ),
+                    )
+                    .block(Block::default().title("Error").borders(Borders::ALL)),
+                    main_layout[2],
+                );
+            } else {
+                // TODO: Adapt layout according to success or not
+                let colors = image_file.get_colors_from_images(
+                    app.nb_colors,
+                    app.excluded_colors.to_owned(),
+                    app.bc_color,
+                );
+                // TODO: Fix
+                let cv = ColorsCanvas::new(colors, false, app.with_rgb, false);
+                let tui_text = cv.tui_text();
+                frame.render_widget(
+                    List::new(tui_text).block(
+                        Block::default()
+                            .title("Extracted colors")
+                            .borders(Borders::ALL),
                     ),
-                )
-                .block(
-                    Block::default()
-                        .title("Extracted Colors")
-                        .borders(Borders::ALL),
-                ),
-                main_layout[2],
-            );
+                    main_layout[2],
+                );
+            }
         }
     }
 }

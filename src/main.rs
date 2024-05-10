@@ -144,17 +144,43 @@ When bcw & bcb are  both requested, bcb is used.",
             process::exit(1);
         }
     };
+    let nb_colors = match matches.get_raw("nb-colors") {
+        Some(nb) => match nb
+            .into_iter()
+            .next()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .parse::<u32>()
+        {
+            Ok(nb) => nb,
+            Err(_) => {
+                eprintln!("You should provide a valid positive number as second arguement.");
+                process::exit(1);
+            }
+        },
+        None => {
+            eprintln!("You should provide a valid number of colors you want to extract.");
+            process::exit(1);
+        }
+    };
+
     let repertory = fs::read_dir(&file_path);
     if repertory.is_ok() {
-        // TODO: Manage Directory Case
-
+        // Directory Case
         enable_raw_mode()?;
         stdout().execute(EnterAlternateScreen)?;
         let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
 
         let tick_rate = Duration::from_millis(250);
-        let app = App::new(&file_path);
-        let res = run_app(&mut terminal, App::new(&file_path) /* app*/, tick_rate);
+        let app = App::new(
+            &file_path,
+            nb_colors as u8,
+            with_rgb,
+            excluded_colors,
+            bc_color,
+        );
+        let res = run_app(&mut terminal, app, tick_rate);
 
         disable_raw_mode()?;
         execute!(terminal.backend_mut(), LeaveAlternateScreen,)?;
@@ -176,27 +202,6 @@ When bcw & bcb are  both requested, bcb is used.",
                 eprintln!(
                 "The path you enter is neither that of a valid repertory, nor that of a valid image file (with extension: .png, .jpeg, .jpg ...etc). Please check it, and try again."
             );
-                process::exit(1);
-            }
-        };
-
-        let nb_colors = match matches.get_raw("nb-colors") {
-            Some(nb) => match nb
-                .into_iter()
-                .next()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .parse::<u32>()
-            {
-                Ok(nb) => nb,
-                Err(_) => {
-                    eprintln!("You should provide a valid positive number as second arguement.");
-                    process::exit(1);
-                }
-            },
-            None => {
-                eprintln!("You should provide a valid number of colors you want to extract.");
                 process::exit(1);
             }
         };

@@ -6,6 +6,7 @@ use crossterm::ExecutableCommand;
 use ratatui::{
     style::{Modifier, Style},
     text::{Line, Span, Text},
+    widgets::ListItem,
 };
 use std::io;
 pub struct ColorsCanvas {
@@ -59,8 +60,9 @@ impl ColorsCanvas {
         }
     }
 
-    pub fn print_tui(&self) -> Text {
+    pub fn tui_text(&self) -> Vec<ListItem> {
         let mut lines_result = Line::from(vec![]);
+        let mut colors_items = Vec::<ListItem>::with_capacity(self.colors.len());
         let t_colors = vec![
             Color { r: 0, g: 0, b: 0 },
             Color {
@@ -70,7 +72,7 @@ impl ColorsCanvas {
             },
         ];
         //  Clipboard management
-        let mut ctx = ClipboardContext::new().unwrap();
+        // let mut ctx = ClipboardContext::new().unwrap();
         let mut colors_clipped_text = String::new();
         for i in 0..self.colors.len() {
             let col = self.colors[i];
@@ -80,29 +82,36 @@ impl ColorsCanvas {
                 _ => col.hexadecimal_str(),
             };
             colors_clipped_text.push_str(&color_str);
-            //   TODO: change here
-            //  stylize_text(color_str, true, txt_col, &col);
-            let span = Span::styled(
-                color_str,
-                Style::new()
+            let color_item = ListItem::new(color_str).style(
+                Style::default()
                     .fg(ratatui::style::Color::Rgb(txt_col.r, txt_col.g, txt_col.b))
                     .bg(ratatui::style::Color::Rgb(col.r, col.g, col.b))
                     .add_modifier(Modifier::BOLD),
             );
-            lines_result.spans.push(span);
-            if i < self.colors.len() - 1 {
-                lines_result.spans.push(Span::raw(","));
-                // print!(",");
-                colors_clipped_text.push(',');
-            }
+            colors_items.push(color_item);
+            // let span = Span::styled(
+            //     color_str,
+            //     Style::new()
+            //         .fg(ratatui::style::Color::Rgb(txt_col.r, txt_col.g, txt_col.b))
+            //         .bg(ratatui::style::Color::Rgb(col.r, col.g, col.b))
+            //         .add_modifier(Modifier::BOLD),
+            // );
+            // lines_result.spans.push(span);
+            // if i < self.colors.len() - 1 {
+            //     lines_result.spans.push(Span::raw(","));
+            //     // print!(",");
+            //     colors_clipped_text.push(',');
+            // }
         }
+
         //    println!();
         // Clip colors if flagged
-        if self.clip_colors {
-            ctx.set_contents(colors_clipped_text).unwrap();
-            let _clipped_colors = ctx.get_contents().unwrap();
-        }
-        Text::from(vec![lines_result])
+        // if self.clip_colors {
+        //     ctx.set_contents(colors_clipped_text).unwrap();
+        //     let _clipped_colors = ctx.get_contents().unwrap();
+        // }
+        // Text::from(vec![lines_result])
+        colors_items
     }
 
     fn draw(&self) {
