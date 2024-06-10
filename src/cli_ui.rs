@@ -282,6 +282,10 @@ fn ui(frame: &mut Frame, app: &mut App) {
                 );
                 // TODO: Fix
                 let cv = ColorsCanvas::new(colors, false, app.with_rgb, false);
+                //  TODO: Explore this way
+                // Paragraph::new(text)
+                // .wrap(Wrap { trim: true })
+                // .centered()
                 let tui_text = cv.tui_text();
                 frame.render_widget(
                     List::new(tui_text).block(
