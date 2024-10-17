@@ -1,9 +1,9 @@
-use crate::{Color, ColorFormat};
-use std::borrow::Borrow; // Vector borrowing
-use crossterm::style::Color as TerminalColor;
-use std::error;
-use regex::Regex;
 use crate::process;
+use crate::{Color, ColorFormat};
+use crossterm::style::Color as TerminalColor;
+use regex::Regex;
+use std::borrow::Borrow; // Vector borrowing
+use std::error;
 
 pub trait ColorTrait {
     fn hexadecimal_str(&self) -> String;
@@ -114,6 +114,10 @@ impl ColorTrait for Color {
     }
 
     fn to_term_color(&self) -> TerminalColor {
-         TerminalColor::Rgb { r: self.r, g:self.g, b: self.b, }
+        TerminalColor::Rgb {
+            r: self.r,
+            g: self.g,
+            b: self.b,
+        }
     }
 }

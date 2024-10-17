@@ -31,8 +31,9 @@ copycolors "https://www.example.com/example.png"
 
 For example,  let's take a local image `example.png`.
 
+<div align="center">
 ![](images/example.png)
-
+</div> 
 Now, let's try to extract the 5 dominant colors of this  image: 
 
 ![](images/cast/ex1.gif)
@@ -84,22 +85,26 @@ copycolors example.png --bcb
 
 ![](images/cast/ex7.gif)
 
+With `0.2.0` version, you can browse a folder of images (up to 65535 image files) to extract dominant colors interactively.
+Let's illustrate that use case with NBA team's logos.
 
-The supported images formats are:
+![](images/cast/ex8.gif)
 
-| Format |
-| :----- |
-| PNG    |
-| JPEG   |
-| GIF    |
-| BMP    |
-| ICO    |
-| TIFF   |
-| WEBP   |
-| AVIF   |
-| PNM    |
-| DDS    |
-| TGA    |
+As in your browsing, you can need more granularity filtering, you can use regular expression with ``--regex` argument.   
+
+![](images/cast/ex9.gif)
+
+Another example with a selection of East teams or Los angeles teams (lakers or clippers)
+
+![](images/cast/ex10.gif)
+
+Even if you set the number of colors to extract initially, in your command, you can extract less (down to `2`)  or more (up to `10`) colors of a file if possible and copy the extracted values to the clipboard.
+
+![](images/cast/ex11.gif)
+
+
+
+The supported images formats are:`PNG`,`JPEG`,`GIF`,`BMP`,`ICO`,`TIFF`,`WEBP`,`AVIF`,`PNM`,`DDS` and `TGA`.
 
 The supported pixels colors type are: `RGB` and `RGBA`.
 

@@ -1,14 +1,13 @@
 use crate::color_trait::ColorTrait;
 use color_thief::Color;
-use copypasta::{ClipboardContext, ClipboardProvider};
 use crossterm::style::{Print, ResetColor, SetBackgroundColor, SetForegroundColor, Stylize};
 use crossterm::ExecutableCommand;
 use ratatui::{
-    style::{Modifier, Style},
-    text::{Line, Span, Text},
-    widgets::ListItem,
+    style::{Color as RatatuiColor, Modifier, Style},
+    text::Span,
 };
 use std::io;
+
 pub struct ColorsCanvas {
     colors: Vec<Color>,
     show_canvas: bool,
@@ -26,6 +25,7 @@ impl ColorsCanvas {
         }
     }
 
+    /// Single file colors printing
     fn print(&self) {
         let t_colors = vec![
             Color { r: 0, g: 0, b: 0 },
@@ -35,9 +35,7 @@ impl ColorsCanvas {
                 b: 255,
             },
         ];
-        //  Clipboard management
-        let mut ctx = ClipboardContext::new().unwrap();
-        let mut colors_clipped_text = String::new();
+
         for i in 0..self.colors.len() {
             let col = self.colors[i];
             let txt_col = col.best_contrast(&t_colors);
@@ -45,80 +43,16 @@ impl ColorsCanvas {
                 true => col.rgb_str(),
                 _ => col.hexadecimal_str(),
             };
-            colors_clipped_text.push_str(&color_str);
-            stylize_text(color_str, true, txt_col, &col);
+            stylize_text(format!(" {} ", color_str), true, txt_col, &col);
             if i < self.colors.len() - 1 {
                 print!(",");
-                colors_clipped_text.push(',');
             }
         }
         println!();
-        // Clip colors if flagged
-        if self.clip_colors {
-            ctx.set_contents(colors_clipped_text).unwrap();
-            let _clipped_colors = ctx.get_contents().unwrap();
-        }
     }
 
-    pub fn tui_text(&self) -> Vec<ListItem> {
-        let mut lines_result = Line::from(vec![]);
-        let mut colors_items = Vec::<ListItem>::with_capacity(self.colors.len());
-        let t_colors = vec![
-            Color { r: 0, g: 0, b: 0 },
-            Color {
-                r: 255,
-                g: 255,
-                b: 255,
-            },
-        ];
-        //  Clipboard management
-        // let mut ctx = ClipboardContext::new().unwrap();
-        let mut colors_clipped_text = String::new();
-        for i in 0..self.colors.len() {
-            let col = self.colors[i];
-            let txt_col = col.best_contrast(&t_colors);
-            let color_str = match self.with_rgb {
-                true => col.rgb_str(),
-                _ => col.hexadecimal_str(),
-            };
-            colors_clipped_text.push_str(&color_str);
-            let color_item = ListItem::new(color_str).style(
-                Style::default()
-                    .fg(ratatui::style::Color::Rgb(txt_col.r, txt_col.g, txt_col.b))
-                    .bg(ratatui::style::Color::Rgb(col.r, col.g, col.b))
-                    .add_modifier(Modifier::BOLD),
-            );
-            colors_items.push(color_item);
-            // let span = Span::styled(
-            //     color_str,
-            //     Style::new()
-            //         .fg(ratatui::style::Color::Rgb(txt_col.r, txt_col.g, txt_col.b))
-            //         .bg(ratatui::style::Color::Rgb(col.r, col.g, col.b))
-            //         .add_modifier(Modifier::BOLD),
-            // );
-            // lines_result.spans.push(span);
-            // if i < self.colors.len() - 1 {
-            //     lines_result.spans.push(Span::raw(","));
-            //     // print!(",");
-            //     colors_clipped_text.push(',');
-            // }
-        }
-
-        //    println!();
-        // Clip colors if flagged
-        // if self.clip_colors {
-        //     ctx.set_contents(colors_clipped_text).unwrap();
-        //     let _clipped_colors = ctx.get_contents().unwrap();
-        // }
-        // Text::from(vec![lines_result])
-        colors_items
-    }
-
+    /// Single file colors drawing
     fn draw(&self) {
-        //  Clipboard management
-        let mut ctx = ClipboardContext::new().unwrap();
-        let mut colors_clipped_text = String::new();
-
         let (term_w, _) = crossterm::terminal::size().unwrap();
         // Square positioning
         let nb_square: u32 = self.colors.len() as u32;
@@ -157,10 +91,6 @@ impl ColorsCanvas {
                                 true => self.colors[index as usize].rgb_str(),
                                 _ => self.colors[index as usize].hexadecimal_str(),
                             };
-                            colors_clipped_text.push_str(&color_str);
-                            if index < nb_square - 1 {
-                                colors_clipped_text.push(',');
-                            }
                             if c < nb_col && index < nb_square {
                                 let color_str = format!(
                                     "{}{}{}",
@@ -185,13 +115,9 @@ impl ColorsCanvas {
             println!();
         }
         println!();
-        // Clip colors if flagged
-        if self.clip_colors {
-            ctx.set_contents(colors_clipped_text).unwrap();
-            let _clipped_colors = ctx.get_contents().unwrap();
-        }
     }
 
+    /// Conditionnally displaying
     pub fn display(&self) {
         match self.show_canvas {
             true => self.draw(),
@@ -199,10 +125,61 @@ impl ColorsCanvas {
         }
     }
 
-    // TODO: Print and drawing methods for colors exctracted from
-    // Text and styling
-    // fn interactive_print() -> Text
-    // fn interactive_draw() -> Text
+    /// TUI Colors displaying
+    pub fn tui_text(&self) -> Vec<Span> {
+        let mut colors_items = Vec::<Span>::with_capacity(self.colors.len() + 1);
+        let t_colors = vec![
+            Color { r: 0, g: 0, b: 0 },
+            Color {
+                r: 255,
+                g: 255,
+                b: 255,
+            },
+        ];
+
+        for i in 0..self.colors.len() {
+            let col = self.colors[i];
+            let txt_col = col.best_contrast(&t_colors);
+            let color_str = match self.with_rgb {
+                true => col.rgb_str(),
+                _ => col.hexadecimal_str(),
+            };
+
+            // Start space
+            let span = Span::styled(
+                format!("\u{00A0}{}\u{00A0}", color_str),
+                Style::new()
+                    .fg(RatatuiColor::Rgb(txt_col.r, txt_col.g, txt_col.b))
+                    .bg(RatatuiColor::Rgb(col.r, col.g, col.b))
+                    .add_modifier(Modifier::BOLD),
+            );
+            colors_items.push(span);
+            if i < self.colors.len() - 1 {
+                colors_items.push(Span::raw(","));
+            }
+        }
+        colors_items
+    }
+
+    /// Clipping function for repertory
+    pub fn colors_clipboarded(&self) -> Option<String> {
+        if !self.clip_colors {
+            return None;
+        }
+        let mut colors_clipped_text = String::new();
+        for i in 0..self.colors.len() {
+            let col = self.colors[i];
+            let color_str = match self.with_rgb {
+                true => col.rgb_str(),
+                _ => col.hexadecimal_str(),
+            };
+            colors_clipped_text.push_str(&color_str);
+            if i < self.colors.len() - 1 {
+                colors_clipped_text.push(',');
+            }
+        }
+        Some(colors_clipped_text)
+    }
 }
 
 fn stylize_text(text: String, bold: bool, fg: &Color, bg: &Color) {
