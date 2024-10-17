@@ -32,7 +32,9 @@ copycolors "https://www.example.com/example.png"
 For example,  let's take a local image `example.png`.
 
 <div align="center">
+
 ![](images/example.png)
+
 </div> 
 Now, let's try to extract the 5 dominant colors of this  image: 
 
