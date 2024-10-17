@@ -1,7 +1,7 @@
 [package]
 name = "copycolors"
 description = "A command Line Utility to extract dominant colors from local or remote image files."
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 author = "Abdoul ISSA BIDA <issamadjid1995@gmail.com>"
 license = "MIT" # https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -23,8 +23,12 @@ ureq =  { version = "2.6.2",  features = ["native-tls", "tls"] }
 url = "2.3.1"
 regex = "1.8.1"
 crossterm = "0.26.1"
+ratatui = "0.28.1"
 clap = "4.3.0"
+copypasta = "0.10.0"
 openssl = { version = "0.10.40", features = ["vendored"] }
+walkdir = "2.5.0"
+rayon = "1.10.0"
 
 [profile.dev]
 opt-level = 1 # Make debug run faster 
